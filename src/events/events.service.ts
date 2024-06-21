@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -9,7 +9,7 @@ type ReserveSpotInput = ReserveSpotDto & { eventId: string };
 
 @Injectable()
 export class EventsService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private prismaService: PrismaService) { }
 
   create(createEventDto: CreateEventDto) {
     return this.prismaService.event.create({
@@ -61,7 +61,8 @@ export class EventsService {
       const notFoundSpotsName = dto.spots.filter(
         (spotName) => !foundSpotsName.includes(spotName),
       );
-      throw new Error(`Spots ${notFoundSpotsName.join(', ')} not found`);
+      //throw new Error(`Spots ${notFoundSpotsName.join(', ')} not found`);
+      throw new HttpException(`Spots not exists: ${notFoundSpotsName.join(', ')}`, HttpStatus.NOT_FOUND)
     }
 
     try {
@@ -108,7 +109,7 @@ export class EventsService {
         switch (e.code) {
           case 'P2002': // constraint violation
           case 'P2034': // tranaction conflict
-            throw new Error('Some of provided spots already reserved');
+            throw new HttpException(`Spots not available: `, HttpStatus.BAD_REQUEST)
         }
       }
       throw e;
